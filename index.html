@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CarMiamiEEUU - Inventario Exclusivo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans antialiased">
+
+    <header class="bg-gray-800 border-b border-gray-700 sticky top-0 z-50 px-4 py-3 shadow-lg">
+        <div class="flex justify-between items-center max-w-md mx-auto">
+            <div>
+                <h1 class="text-xl font-black tracking-wider text-amber-500">CarMiami<span class="text-white">EEUU</span></h1>
+                <p class="text-xs text-gray-400">Tu próximo auto en el sur de la Florida</p>
+            </div>
+            <span id="statusBadge" class="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs font-bold px-2 py-1 rounded-full">
+                Cargando...
+            </span>
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto px-4 py-4 space-y-4 pb-24">
+        
+        <div class="relative">
+            <input type="text" id="searchBar" onkeyup="filterCars()" placeholder="Buscar por marca o modelo..." 
+                   class="w-full bg-gray-800 text-white placeholder-gray-500 border border-gray-700 rounded-xl pl-4 pr-4 py-3 focus:outline-none focus:border-amber-500/50">
+        </div>
+
+        <div class="flex gap-2 overflow-x-auto pb-2" id="filterBadges">
+            <button onclick="setFilter('ALL')" class="bg-amber-500 text-gray-900 font-bold px-4 py-1.5 rounded-full text-xs shrink-0 shadow-md">Todos</button>
+            <button onclick="setFilter('SUV')" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-1.5 rounded-full text-xs shrink-0">SUVs</button>
+            <button onclick="setFilter('PICK-UP')" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-1.5 rounded-full text-xs shrink-0">Pick-Ups</button>
+            <button onclick="setFilter('SEDAN')" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-1.5 rounded-full text-xs shrink-0">Sedans</button>
+            <button onclick="setFilter('COUPE')" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-1.5 rounded-full text-xs shrink-0">Coupes</button>
+            <button onclick="setFilter('CARGO VAN')" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-1.5 rounded-full text-xs shrink-0">Vans</button>
+        </div>
+
+        <div id="carContainer" class="space-y-4"></div>
+
+    </main>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-gray-800/95 backdrop-blur border-t border-gray-700 py-3 z-50">
+        <div class="max-w-md mx-auto flex justify-around items-center text-center">
+            <button class="flex flex-col items-center text-amber-500">
+                <span class="text-xl">🚗</span>
+                <span class="text-[10px] font-bold mt-0.5">Inventario</span>
+            </button>
+            <a href="https://wa.me/14178532077?text=Hola,%20deseo%20consultar%20el%20inventario%20de%20CarMiamiEEUU" target="_blank" class="flex flex-col items-center text-gray-400 hover:text-green-400 transition-colors">
+                <span class="text-xl">💬</span>
+                <span class="text-[10px] font-bold mt-0.5">Asesor Chat</span>
+            </a>
+        </div>
+    </nav>
+
+    <script>
+        const SHEET_ID = '1vyT6qEk1SAGz1MTxzBpu3H-dxc_Nf7yqn8a-duH9ZjU';
+        const URL_ENDPOINT = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+
+        const localBackupData = [
+            { stock: "ORL43", ano: "2023", modelo: "CHEVROLET MALIBU LS", color: "BLACK", tipo: "SEDAN", vin: "1G1ZC5ST2PF241741", millas: "48,916", precio: "20500.00", titulo: "C", foto_url: "" },
+            { stock: "KEY75-B", ano: "2022", modelo: "DODGE CHALLENGER GT", color: "BLACK", tipo: "COUPE", vin: "2C3CDZKGXNH205882", millas: "52,949", precio: "28599.00", titulo: "R", foto_url: "https://imagescf.dealercenter.net/1116/836/202604-0bce6cbd2e1e418f9c2ead13b7f52eab.jpg" },
+            { stock: "KEY37", ano: "2019", modelo: "FORD RANGER SUPERCREW XLT", color: "SILVER", tipo: "PICK-UP", vin: "1FTER4FH4KLA51552", millas: "58,310", precio: "25999.00", titulo: "R", foto_url: "https://imagescf.dealercenter.net/1116/836/202511-3978c4119b974bb0930d7b5f4e9ea7cc/202511-038741a23cd14703adb5648daf3d01b2.jpg" },
+            { stock: "KEY44", ano: "2022", modelo: "FORD TRANSIT 250 CARGO VAN", color: "WHITE", tipo: "CARGO VAN", vin: "1FTBR1Y84NKA32086", millas: "28,063", precio: "35500.00", titulo: "C", foto_url: "https://imagescf.dealercenter.net/1116/836/202512-00a719e404794c2096d583902339d273/202512-b71fbd7c4ad04eb88d7c2e88ecccc76c.jpg" },
+            { stock: "ORL34", ano: "2020", modelo: "TOYOTA TACOMA DOUBLE CAB TRD", color: "SILVER", tipo: "PICK-UP", vin: "5TFCZ5AN5LX231613", millas: "126,492", precio: "31000.00", titulo: "C", foto_url: "https://imagescf.dealercenter.net/1116/836/202508-a5b4351befd840aaac2cbf5bb4757a3e/202508-4363bb6143574169a9b9a08067abda55.jpg" },
+            { stock: "ORL02", ano: "2021", modelo: "Nissan Kicks S Sport Utility 4D", color: "BLACK", tipo: "SUV", vin: "3N1CP5BV7ML479639", millas: "83,228", precio: "12699.00", titulo: "R", foto_url: "https://imagescf.dealercenter.net/1116/836/202604-b1d6f5d1114542c0a08972872ebc8333.jpg" },
+            { stock: "ORL36", ano: "2022", modelo: "Toyota 4Runner TRD Sport", color: "BLACK", tipo: "SUV", vin: "JTEAU5JR7N5264857", millas: "37,035", precio: "37399.00", titulo: "R", foto_url: "" },
+            { stock: "KEY184", ano: "2023", modelo: "Ford F150 SuperCrew Cab XLT", color: "RED", tipo: "PICK-UP", vin: "1FTEW1C81PKE57913", millas: "59,295", precio: "39099.00", titulo: "R", foto_url: "https://imagescf.dealercenter.net/1116/836/202605-b772beceb5a440c9b8e0e4fdca1a07d8.jpg" },
+            { stock: "KEY153", ano: "2025", modelo: "Honda Civic Sport", color: "WHITE", tipo: "SEDAN", vin: "2HGFE2F51SH606384", millas: "2,080", precio: "28399.00", titulo: "R", foto_url: "https://imagescf.dealercenter.net/1116/836/202604-35ab77013f7e441da66293ce7b51f434.jpg" },
+            { stock: "C96051", ano: "2019", modelo: "Ford F150 SuperCrew Cab Limited", color: "RED", tipo: "PICK-UP", vin: "1FTEW1EG3KFC96051", millas: "92,973", precio: "38499.00", titulo: "R", foto_url: "" },
+            { stock: "269738", ano: "2020", modelo: "Toyota Tundra", color: "WHITE", tipo: "PICK-UP", vin: "5TFRY5F12LX269738", millas: "62,654", precio: "26499.00", titulo: "R", foto_url: "https://imagescf.dealercenter.net/1116/836/202605-625f1a24a07d4c08ae934ace4c6780af.jpg" }
+        ];
+
+        let carsData = [];
+        let currentFilter = 'ALL';
+
+        window.onload = function() {
+            inicializarApp();
+        };
+
+        async function inicializarApp() {
+            try {
+                const response = await fetch(URL_ENDPOINT);
+                const text = await response.text();
+                const jsonString = text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1);
+                const json = JSON.parse(jsonString);
+                const rows = json.table.rows;
+
+                carsData = rows.map(row => {
+                    return {
+                        stock: row.c[0] ? String(row.c[0].v) : '',
+                        ano: row.c[1] ? String(row.c[1].v) : '',
+                        modelo: row.c[2] ? String(row.c[2].v) : '',
+                        color: row.c[3] ? String(row.c[3].v) : '',
+                        tipo: row.c[4] ? String(row.c[4].v) : '',
+                        vin: row.c[5] ? String(row.c[5].v) : '',
+                        millas: row.c[6] ? row.c[6].v : 0,
+                        precio: row.c[7] ? row.c[7].v : 0,
+                        titulo: row.c[8] ? String(row.c[8].v) : '',
+                        foto_url: row.c[9] ? String(row.c[9].v) : ''
+                    };
+                }).filter(car => car.stock !== 'STOCK' && car.stock !== '');
+
+                document.getElementById('statusBadge').className = "bg-green-500/10 text-green-400 border border-green-500/30 text-xs font-bold px-2 py-1 rounded-full";
+                document.getElementById('statusBadge').innerText = "● CLOUD LIVE";
+
+            } catch (error) {
+                carsData = localBackupData;
+                document.getElementById('statusBadge').className = "bg-blue-500/10 text-blue-400 border border-blue-500/30 text-xs font-bold px-2 py-1 rounded-full";
+                document.getElementById('statusBadge').innerText = "● LOCAL DATA";
+            }
+            filterCars();
+        }
+
+        function renderCars(cars) {
+            const container = document.getElementById('carContainer');
+            container.innerHTML = '';
+            
+            if(cars.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-gray-500">No hay vehículos en esta categoría.</div>`;
+                return;
+            }
+
+            cars.forEach(car => {
+                const titleBadge = car.titulo.toUpperCase() === 'C' 
+                    ? `<span class="bg-green-500/20 text-green-400 border border-green-500/30 text-[10px] font-black px-2 py-0.5 rounded">CLEAN TITLE</span>`
+                    : `<span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] font-black px-2 py-0.5 rounded">REBUILT TITLE</span>`;
+
+                const whatsappText = encodeURIComponent(`Hola! Vi el ${car.modelo} ${car.ano} (ST: ${car.stock}) en la app. ¿Sigue disponible?`);
+                const whatsappUrl = `https://wa.me/14178532077?text=${whatsappText}`;
+                const foto = car.foto_url || "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&q=80&w=600";
+
+                const card = `
+                    <div class="bg-gray-800 rounded-2xl overflow-hidden border border-gray-700 shadow-md">
+                        <div class="relative h-48 bg-gray-900 overflow-hidden">
+                            <img src="${foto}" class="absolute inset-0 w-full h-full object-cover select-none pointer-events-none" alt="${car.modelo}" loading="lazy">
+                            <div class="absolute top-3 left-3 flex gap-1.5">
+                                ${titleBadge}
+                                <span class="bg-gray-900/80 text-gray-300 text-[10px] font-bold px-2 py-0.5 rounded">ST: ${car.stock}</span>
+                            </div>
+                            <div class="absolute bottom-3 right-3 bg-gray-950/80 backdrop-blur text-amber-400 text-lg font-black px-3 py-1 rounded-xl">
+                                $${Number(car.precio).toLocaleString('en-US', {minimumFractionDigits: 2})}
+                            </div>
+                        </div>
+                        <div class="p-4 space-y-3">
+                            <div>
+                                <span class="text-xs font-bold text-amber-500 uppercase">${car.tipo}</span>
+                                <h3 class="text-base font-bold text-white leading-tight">${car.ano} ${car.modelo}</h3>
+                                <p class="text-xs text-gray-400 mt-1 font-mono">VIN: ${car.vin}</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 bg-gray-900/50 p-2.5 rounded-xl text-xs">
+                                <div><span class="text-gray-500">Millas:</span> <strong class="text-gray-200">${Number(String(car.millas).replace(/,/g, '')).toLocaleString('en-US')}</strong></div>
+                                <div><span class="text-gray-500">Color:</span> <strong class="text-gray-200">${car.color}</strong></div>
+                            </div>
+                            <a href="${whatsappUrl}" target="_blank" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all">
+                                <span>Verificar Disponibilidad</span> 💬
+                            </a>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += card;
+            });
+        }
+
+        function filterCars() {
+            const query = document.getElementById('searchBar').value.toLowerCase();
+            const filtered = carsData.filter(car => {
+                const matchesSearch = car.modelo.toLowerCase().includes(query) || car.tipo.toLowerCase().includes(query) || car.stock.toLowerCase().includes(query);
+                const matchesFilter = currentFilter === 'ALL' || car.tipo.toUpperCase() === currentFilter;
+                return matchesSearch && matchesFilter;
+            });
+            renderCars(filtered);
+        }
+
+        function setFilter(type) {
+            currentFilter = type;
+            const buttons = document.querySelectorAll('#filterBadges button');
+            buttons.forEach(btn => {
+                if(btn.textContent.toUpperCase().includes(type) || (type === 'ALL' && btn.textContent === 'Todos')) {
+                    btn.className = "bg-amber-500 text-gray-900 font-bold px-4 py-1.5 rounded-full text-xs shrink-0 shadow-md";
+                } else {
+                    btn.className = "bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-1.5 rounded-full text-xs shrink-0 transition-colors";
+                }
+            });
+            filterCars();
+        }
+    </script>
+</body>
+</html>
